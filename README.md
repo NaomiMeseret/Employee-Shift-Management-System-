@@ -11,7 +11,7 @@ Update: Modify shift details (e.g., reschedule a shift).
 
 Delete: Remove shifts if no longer needed.
 
-3. Attendance Tracking
+2. Attendance Tracking
    
 Create: Log clock-in and clock-out times for employees.
 
