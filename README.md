@@ -14,6 +14,10 @@ Mobile App Features:
 Shift Management: Employees can view, request, or swap shifts.
 Attendance: Employees can clock in/out.
 Admin Features: Managers can assign shifts, track attendance, and generate reports.
+
+
+
+
 | Name  | student Id  |
 |-----------|-----------|
 | 1. Betel Mekasha   | UGR/1984/15   |
@@ -21,4 +25,5 @@ Admin Features: Managers can assign shifts, track attendance, and generate repor
 | 3. Naomi Meseret   | UGR/5048/15   |
 | 4. Newal Nesredin   | UGR/1550/15  |
 | 5. Rahel Yabebal    | UGR/6200/15   |
+
 
