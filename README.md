@@ -1,18 +1,32 @@
 # Employee-Shift-Management-System-
 A mobile application for managing employee shifts.It includes features like assigning shifts, tracking attendance, and generating shift reports.
+
 1. Shift Assignment
+
 Create: Assign shifts to employees (morning, evening, night) for specific dates.
+
 Read: View the shifts assigned to employees for any given period.
+
 Update: Modify shift details (e.g., reschedule a shift).
+
 Delete: Remove shifts if no longer needed.
-2. Attendance Tracking
+
+3. Attendance Tracking
+4. 
 Create: Log clock-in and clock-out times for employees.
+
 Read: View employee attendance records (e.g., daily, weekly).
+
 Update: Correct any attendance mistakes (e.g., missed clock-ins).
+
 Delete: Remove incorrect attendance records.
+
 Mobile App Features:
+
 Shift Management: Employees can view, request, or swap shifts.
+
 Attendance: Employees can clock in/out.
+
 Admin Features: Managers can assign shifts, track attendance, and generate reports.
 
 
