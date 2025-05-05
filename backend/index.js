@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import Employee from "./modals/modal.employee.js";
+import connectDB from './utils/connect.db.js'
 
 dotenv.config();
 
