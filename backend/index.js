@@ -1,6 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
-import Employee from "./modals/modal.employee";
+import Employee from "./modals/modal.employee.js";
 
 dotenv.config();
 
@@ -44,15 +44,6 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-app.get("/api/employees", async (req, res) => {
-  try {
-    const employees = await Employee.find();
-    return res.status(200).json(employees);
-  } catch (error) {
-    return res.status(500).json({ message: "Error fetching employees", error });
-  }
-});
-
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   const employee = await Employee.findOne({ email });
@@ -63,6 +54,15 @@ app.post("/api/login", async (req, res) => {
     return res.status(401).json({ message: "Invalid credentials" });
   }
   return res.status(200).json({ message: "Login successful", employee });
+});
+
+app.get("/api/employees", async (req, res) => {
+  try {
+    const employees = await Employee.find();
+    return res.status(200).json(employees);
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching employees", error });
+  }
 });
 
 app.listen(3000);
