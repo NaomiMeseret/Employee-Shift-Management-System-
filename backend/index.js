@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import Employee from "./modals/modal.employee.js";
-import connectDB from './utils/connect.db.js'
+import connectDB from "./utils/connect.db.js";
 
 dotenv.config();
 
@@ -69,7 +69,7 @@ app.get("/api/employees", async (req, res) => {
 app.get("/api/employees/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const employee = await Employee.findOne({id});
+    const employee = await Employee.findOne({ id });
     if (!employee) {
       return res.status(404).json({ message: "Employee not found" });
     }
@@ -77,7 +77,44 @@ app.get("/api/employees/:id", async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: "Error fetching employee", error });
   }
-}
-);
+});
 
-app.listen(3000);
+app.put("/api/employees/:id", async (req, res) => {
+  const { id } = req.params;
+  const {
+    name,
+    email,
+    password,
+    profilePicture,
+    phone,
+    position,
+    shift,
+    status,
+    isAdmin,
+  } = req.body;
+  try {
+    const employee = await Employee.findOneAndUpdate(
+      { id },
+      {
+        name,
+        email,
+        password,
+        profilePicture,
+        phone,
+        position,
+        shift,
+        status,
+        isAdmin,
+      },
+      { new: true }
+    );
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    return res.status(200).json(employee);
+  } catch (error) {
+    return res.status(500).json({ message: "Error updating employee", error });
+  }
+});
+
+app.listen(3000, connectDB());
