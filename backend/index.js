@@ -117,4 +117,20 @@ app.put("/api/employees/:id", async (req, res) => {
   }
 });
 
+app.delete("/api/employees/:id", async (req, res) => {
+  const { id } = req.params;
+  Employee.findOneAndDelete({ id })
+    .then((employee) => {
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
+      return res.status(200).json({ message: "Employee deleted successfully" });
+    })
+    .catch((error) => {
+      return res
+        .status(500)
+        .json({ message: "Error deleting employee", error });
+    });
+});
+
 app.listen(3000, connectDB());
