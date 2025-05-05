@@ -65,4 +65,18 @@ app.get("/api/employees", async (req, res) => {
   }
 });
 
+app.get("/api/employees/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const employee = await Employee.findOne({id});
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    return res.status(200).json(employee);
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching employee", error });
+  }
+}
+);
+
 app.listen(3000);
