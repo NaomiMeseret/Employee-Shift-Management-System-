@@ -87,6 +87,20 @@ async function getOneEmployee(req, res) {
   }
 }
 
+//get all employees
+
+async function getAllEmployees(req, res) {
+  try {
+    const employees = await Employee.find();
+    if (!employees) {
+      return res.status(404).json({ message: "No employees found" });
+    }
+    return res.status(200).json(employees);
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching employees", error });
+  }
+}
+
 //update employee
 
 async function updateEmployee(req, res) {
