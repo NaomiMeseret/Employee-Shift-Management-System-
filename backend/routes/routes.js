@@ -1,5 +1,7 @@
+import bcrypt from "bcryptjs";
 import Employee from "../modals/modal.employee.js";
-//register
+
+// Register
 async function register(req, res) {
   const {
     name,
@@ -14,20 +16,32 @@ async function register(req, res) {
     isAdmin,
   } = req.body;
 
-  const employee = new Employee({
-    name,
-    email,
-    id,
-    password,
-    profilePicture,
-    phone,
-    position,
-    shift,
-    status,
-    isAdmin,
-  });
-
   try {
+    // Check if email or id already exists
+    const existingEmployee = await Employee.findOne({
+      $or: [{ email }, { id }],
+    });
+    if (existingEmployee) {
+      return res.status(400).json({ message: "Email or ID already in use" });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const employee = new Employee({
+      name,
+      email,
+      id,
+      password: hashedPassword,
+      profilePicture,
+      phone,
+      position,
+      shift,
+      status,
+      isAdmin,
+    });
+
     const savedEmployee = await employee.save();
     return res
       .status(201)
@@ -37,31 +51,24 @@ async function register(req, res) {
   }
 }
 
-//login
-
+// Login
 async function login(req, res) {
   const { email, password } = req.body;
-  const employee = await Employee.findOne({ email });
 
-  if (!employee) {
-    return res.status(404).json({ message: "User not found" });
-  }
-
-  if (employee.password !== password) {
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
-
-  return res.status(200).json({ message: "Login successful", employee });
-}
-
-//get all employees
-
-async function getAllEmployees(req, res) {
   try {
-    const employees = await Employee.find();
-    return res.status(200).json(employees);
+    const employee = await Employee.findOne({ email });
+    if (!employee) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, employee.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    return res.status(200).json({ message: "Login successful", employee });
   } catch (error) {
-    return res.status(500).json({ message: "Error fetching employees", error });
+    return res.status(500).json({ message: "Login error", error });
   }
 }
 
