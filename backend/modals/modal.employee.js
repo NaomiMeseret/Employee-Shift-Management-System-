@@ -40,7 +40,7 @@ const employeeSchema = new mongoose.Schema(
     },
     shift: {
       type: String,
-      enum: ["morning", "afternoon", "night"],
+      enum: ["morning", "afternoon", "night", null],
       default: "morning",
       required: true,
       trim: true,
