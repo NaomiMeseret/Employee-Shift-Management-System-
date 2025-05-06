@@ -2,6 +2,8 @@
 import express from "express";
 
 import {
+  clockin,
+  clockout,
   deleteEmployee,
   getAllEmployees,
   getOneEmployee,
@@ -29,5 +31,11 @@ router.put("/:id", updateEmployee);
 
 // Delete
 router.delete("/:id", deleteEmployee);
+
+//clock in
+router.post("/clockin/:id", clockin);
+
+//clock out
+router.post("/:id/clockout", clockout);
 
 export default router;

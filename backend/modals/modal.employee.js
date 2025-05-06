@@ -54,10 +54,22 @@ const employeeSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    attendance: [
+      {
+        date: {
+          type: String,
+          required: true,
+        },
+        status: {
+          type: String,
+          enum: ["active", "on leave", "inactive"],
+          required: true,
+        },
+      },
+    ],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
+
 const Employee = mongoose.model("Employee", employeeSchema);
 export default Employee;

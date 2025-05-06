@@ -9,7 +9,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Use the routes (prefix with /api/employees)
 app.use("/api/employees", employeeRoutes);
 
 app.listen(3000, connectDB());

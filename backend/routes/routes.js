@@ -139,6 +139,62 @@ async function deleteEmployee(req, res) {
   }
 }
 
+//clock in
+
+async function clockin(req, res) {
+  const { id } = req.params;
+  const date = new Date().toISOString().split("T")[0];
+
+  try {
+    const employee = await Employee.findOne({ id });
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    const alreadyClockedIn = employee.attendance.find((a) => a.date === date);
+    if (alreadyClockedIn) {
+      return res.status(400).json({ message: "Already clocked in today" });
+    }
+
+    employee.attendance.push({ date, status: "active" });
+    employee.status = "active";
+    await employee.save();
+
+    res.status(200).json({ message: "Clock-in successful", employee });
+  } catch (error) {
+    res.status(500).json({ message: "Clock-in failed", error });
+  }
+}
+
+//clock out
+
+async function clockout(req, res) {
+  const { id } = req.params;
+  const date = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+
+  try {
+    const employee = await Employee.findOne({ id });
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    const today = employee.attendance.find((a) => a.date === date);
+    if (!today) {
+      return res.status(400).json({ message: "You haven't clocked in today" });
+    }
+
+    today.status = "on leave";
+    employee.status = "on leave"; // update current status
+    await employee.save();
+
+    res.status(200).json({ message: "Clock-out successful", employee });
+  } catch (error) {
+    res.status(500).json({ message: "Clock-out failed", error });
+  }
+}
+
 export {
   register,
   login,
@@ -146,4 +202,6 @@ export {
   getOneEmployee,
   updateEmployee,
   deleteEmployee,
+  clockin,
+  clockout,
 };
