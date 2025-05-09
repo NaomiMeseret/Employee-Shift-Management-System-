@@ -40,8 +40,8 @@ const employeeSchema = new mongoose.Schema(
     },
     shift: {
       type: String,
-      enum: ["morning", "afternoon", "night", null],
-      default: "morning",
+      enum: ["morning", "afternoon", "night", "null"],
+      default: "null",
       required: true,
       trim: true,
     },
@@ -73,3 +73,4 @@ const employeeSchema = new mongoose.Schema(
 
 const Employee = mongoose.model("Employee", employeeSchema);
 export default Employee;
+
