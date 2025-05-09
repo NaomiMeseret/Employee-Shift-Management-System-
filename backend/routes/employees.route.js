@@ -14,49 +14,55 @@ import {
   getOneEmployee,
   login,
   register,
+  singleAttendance,
+  singleStatus,
   updateEmployee,
 } from "./routes.js";
-import Employee from "../modals/modal.employee.js";
 
 const router = express.Router();
 
 // Register
-router.post("/register", register);
+router.post("/register", register); //works
 
 // Login
-router.post("/login", login);
+router.post("/login", login); //works
 
 // Get all
-router.get("/", getAllEmployees);
+router.get("/employees", getAllEmployees); //works
 
 // Get one
-router.get("/:id", getOneEmployee);
+router.get("/employees/:id", getOneEmployee); //works
 
 // Update
-router.put("/:id", updateEmployee);
+router.put("/updateEmployee/:id", updateEmployee); //works
 
 // Delete
-router.delete("/:id", deleteEmployee);
+router.delete("/deleteEmployee/:id", deleteEmployee); //works
 
 //clock in
-router.post("/clockin/:id", clockin);
+router.post("/clockin/:id", clockin); //works
 
 //clock out
-router.post("/:id/clockout", clockout);
+router.post("/clockout/:id", clockout); //works
 
 //assign shift
-router.post("/assign-shift/:id", assignShift);
+router.post("/assignShift/:id", assignShift); //works
 
 //get assigned shift for a single employee
-router.get("/assigned-shift/:id", getAssignedShift);
+router.get("/assignedShift/:id", getAssignedShift); //works
 
 //get all assigned shifts
-router.get("/assigned-shift", getAllAssignedShifts);
+router.get("/assignedShift", getAllAssignedShifts); //works
 
 //get all Employee with status
-router.get("/status", getAllEmployeesWithStatus);
+router.get("/status", getAllEmployeesWithStatus); //works
 
+// get sigle employee with status
+router.get("/status/:id", singleStatus);
 //get all employees with attendance
-router.get("/attendance", getAllEmployeesWithAttendance);
+router.get("/attendance", getAllEmployeesWithAttendance); //works
+
+router.get("/attendance/:id", singleAttendance); //works
 
 export default router;
+
