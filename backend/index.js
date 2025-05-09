@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/employees", employeeRoutes);
+app.use("/api/", employeeRoutes);
 
 const port = process.env.PORT || 3000;
 
