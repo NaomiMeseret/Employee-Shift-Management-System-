@@ -254,7 +254,9 @@ async function getAssignedShift(req, res) {
       return res.status(404).json({ message: "Employee not found" });
     }
 
-    return res.status(200).json({ shift: employee.shift });
+    return res
+      .status(200)
+      .json({ name: employee.name, id: employee.id, shift: employee.shift });
   } catch (error) {
     return res.status(500).json({ message: "Error retrieving shift", error });
   }
@@ -264,7 +266,7 @@ async function getAssignedShift(req, res) {
 
 async function getAllAssignedShifts(req, res) {
   try {
-    const employees = await Employee.find({}, "name shift");
+    const employees = await Employee.find({}, "name id shift");
 
     if (!employees) {
       return res.status(404).json({ message: "No employees found" });
@@ -276,11 +278,29 @@ async function getAllAssignedShifts(req, res) {
   }
 }
 
+// get single employee with status
+
+async function singleStatus(req, res) {
+  const id = req.params.id;
+  try {
+    const employee = await Employee.findOne({ id }, "name id status");
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    return res.status(200).json(employee);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error retrieving employee", error });
+  }
+}
+
 //get all employees with status
 
 async function getAllEmployeesWithStatus(req, res) {
   try {
-    const employees = await Employee.find({}, "name status");
+    const employees = await Employee.find({}, "name id status");
 
     if (!employees) {
       return res.status(404).json({ message: "No employees found" });
@@ -294,11 +314,30 @@ async function getAllEmployeesWithStatus(req, res) {
   }
 }
 
+//get single employee with attendance
+async function singleAttendance(req, res) {
+  const { id } = req.params;
+
+  try {
+    const employee = await Employee.findOne({ id }, "name id attendance");
+
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    return res.status(200).json(employee);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error retrieving employee", error });
+  }
+}
+
 //get all employees with attendance
 
 async function getAllEmployeesWithAttendance(req, res) {
   try {
-    const employees = await Employee.find({}, "name attendance");
+    const employees = await Employee.find({}, "name id attendance");
 
     if (!employees) {
       return res.status(404).json({ message: "No employees found" });
@@ -326,4 +365,6 @@ export {
   getAllAssignedShifts,
   getAllEmployeesWithStatus,
   getAllEmployeesWithAttendance,
+  singleAttendance,
+  singleStatus,
 };
