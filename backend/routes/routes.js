@@ -331,26 +331,42 @@ async function getAllAssignedShifts(req, res) {
 // update shift by ID
 async function updateShift(req, res) {
   const { id } = req.params;
-  const { date, shiftType } = req.body;
+  const { date, shiftType, attendance } = req.body;
   
   try {
-    const updatedShift = await Shift.findOneAndUpdate(
+    const updateFields = {};
+    if (date) updateFields.date = date;
+    if (shiftType) updateFields.shiftType = shiftType;
+
+    let updatedShift = await Shift.findOneAndUpdate(
       { id },
-      { date, shiftType },
-      { new: true } // return updated doc
+      { $set: updateFields },
+      { new: true }
     );
+
+    if (attendance && attendance.length > 0) {
+      await Shift.updateOne(
+        { id },
+        { $push: { attendance: { $each: attendance } } }
+      );
+      updatedShift = await Shift.findOne({ id });
+    }
     
     if (!updatedShift) {
       return res.status(404).json({ message: "Shift not found" });
     }
     console.log(updatedShift)
    
-    return res.status(200).json({ message: "Shift updated", shift: {
-      id: updatedShift.id,
-      date: updatedShift.date,
-      shiftType: updatedShift.shiftType,
-      employeeId: updatedShift.employeeId
-    } });
+    return res.status(200).json({
+      message: "Shift updated",
+      shift: {
+        id: updatedShift.id,
+        date: updatedShift.date,
+        shiftType: updatedShift.shiftType,
+        employeeId: updatedShift.employeeId,
+        attendance: updatedShift.attendance,
+      },
+    });
   } catch (error) {
     console.log(error)
     return res.status(500).json({ message: "Error updating shift", error });

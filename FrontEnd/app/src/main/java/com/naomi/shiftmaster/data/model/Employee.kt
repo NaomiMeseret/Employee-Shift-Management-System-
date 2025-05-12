@@ -10,6 +10,5 @@ data class Employee(
     val phone: String,
     val position: String,
     val status: String = "inactive", // enum ["active", "inactive", "on leave"]
-    val isAdmin: Boolean = false,
-    val attendance: List<Attendance> = listOf()
+    val isAdmin: Boolean = false
 )

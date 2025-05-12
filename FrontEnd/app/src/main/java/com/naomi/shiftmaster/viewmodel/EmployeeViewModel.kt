@@ -71,6 +71,8 @@ class EmployeeViewModel(
         viewModelScope.launch {
             repository.updateEmployee(id, employee)
         }
+
+
     }
 
     // Login
@@ -91,20 +93,20 @@ class EmployeeViewModel(
             repository.assignShift(shiftId, employeeId, date, shiftType)
         }
     }
-    fun updateShift(id: Int, shiftType: String, date: String){
-        
+    fun updateShift(id: Int, shiftType: String, date: String, attendance: Attendance? = null){
+        val activities = attendance?.let { listOf(it) }
         viewModelScope.launch{
 
-            repository.updateShift(id.toString(), ShiftUpdate(shiftType =shiftType, date = date))
+            repository.updateShift(id.toString(), ShiftUpdate(shiftType =shiftType, date = date, attendance = activities))
         }
             
     }
     fun loadAssignedShifts(id: Int){
         viewModelScope.launch {
-            println("✅ here is the id ${id}")
+
             try {
                 val shifts = repository.getAssignedShift(id)
-                println("✅Got all shifts of ${id} ${shifts}")
+
                 _assignedShifts.value = shifts
 
             } catch (e: Exception) {
