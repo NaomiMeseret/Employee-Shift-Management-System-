@@ -31,6 +31,7 @@ import androidx.media3.exoplayer.offline.Download
 import com.naomi.shiftmaster.R
 import com.naomi.shiftmaster.ui.components.NavItem
 import com.naomi.shiftmaster.viewmodel.AdminAttendanceViewModel
+import com.naomi.shiftmaster.viewmodel.EmployeeViewModel
 
 private val HEADER_HEIGHT = 70.dp
 private val FOOTER_HEIGHT = 70.dp
@@ -44,10 +45,11 @@ private val TABLE_SPACING = 24.dp
 fun AdminAttendanceScreen(
     onNavItemClick: (String) -> Unit = {},
     onSignOut: () -> Unit = {},
-    viewModel: AdminAttendanceViewModel = viewModel()
+    viewModel: AdminAttendanceViewModel = viewModel(),
 ) {
     Log.d("AdminAttendanceScreen", "Screen composed")
-    val groupedAttendance by  viewModel.groupedAttendance.collectAsState(emptyList())
+
+    val shiftItems by viewModel.shiftWithEmployees.collectAsState(emptyList())
     Scaffold(
         topBar = {
             Surface(
@@ -120,67 +122,64 @@ fun AdminAttendanceScreen(
                     }
                 }
 
-                
-                groupedAttendance.forEachIndexed { dateIndex, dailyData ->
-                    Text(
-                        dailyData.date,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(vertical = 12.dp)
-                    )
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))
-                    ) {
-                        Column {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFFDDDDDD), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                                    .padding(vertical = 12.dp, horizontal = 8.dp)
-                            ) {
-                                Text("Name", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.weight(1f), color = Color.DarkGray)
-                                Text("ID", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.width(80.dp), textAlign = TextAlign.Center, color = Color.DarkGray)
-                                Text("Shift", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.width(80.dp), textAlign = TextAlign.Center, color = Color.DarkGray)
-                                Text("Present", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.width(80.dp), textAlign = TextAlign.Center, color = Color.DarkGray)
-                            }
 
-                            dailyData.records.forEachIndexed { index, record ->
-                                Column {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(Color.White)
-                                            .padding(vertical = 12.dp, horizontal = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(record.employee.name, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFDDDDDD), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                .padding(vertical = 12.dp, horizontal = 8.dp)
+                        ) {
+                            Text("Name", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.weight(1f), color = Color.DarkGray)
+                            Text("ID", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.width(80.dp), textAlign = TextAlign.Center, color = Color.DarkGray)
+                            Text("Shift", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.width(80.dp), textAlign = TextAlign.Center, color = Color.DarkGray)
+                            Text("Present", fontWeight = FontWeight.Medium, fontSize = 14.sp, modifier = Modifier.width(80.dp), textAlign = TextAlign.Center, color = Color.DarkGray)
+                        }
+
+                        shiftItems.forEachIndexed { index, record ->
+
+
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color.White)
+                                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(record.employee.name, fontWeight = FontWeight.Medium, fontSize = 14.sp)
 //                                            Text(record.employee.role, fontSize = 12.sp, color = Color.Gray)
-                                        }
-                                        Box(modifier = Modifier.width(80.dp), contentAlignment = Alignment.Center) {
-                                            Text(record.employee.id.toString(), fontSize = 14.sp)
-                                        }
-                                        Box(modifier = Modifier.width(80.dp), contentAlignment = Alignment.Center) {
-                                            Text(record.shiftType, fontSize = 14.sp)
-                                        }
-                                        Box(modifier = Modifier.width(80.dp), contentAlignment = Alignment.Center) {
-                                            if (record.isPresent) {
-                                                Icon(Icons.Default.Check, contentDescription = "Present", tint = Color.Green)
-                                            } else {
-                                                Icon(Icons.Default.Close, contentDescription = "Absent", tint = Color.Red)
-                                            }
+                                    }
+                                    Box(modifier = Modifier.width(80.dp), contentAlignment = Alignment.Center) {
+                                        Text(record.employee.id.toString(), fontSize = 14.sp)
+                                    }
+                                    Box(modifier = Modifier.width(80.dp), contentAlignment = Alignment.Center) {
+                                        Text(record.shiftType, fontSize = 14.sp)
+                                    }
+                                    Box(modifier = Modifier.width(80.dp), contentAlignment = Alignment.Center) {
+                                        if (record.attendance != null && record.attendance.size > 0) {
+                                            Icon(Icons.Default.Check, contentDescription = "Present", tint = Color.Green)
+                                        } else {
+                                            Icon(Icons.Default.Close, contentDescription = "Absent", tint = Color.Red)
                                         }
                                     }
-                                    if (index < dailyData.records.lastIndex) Divider(color = Color.LightGray, thickness = 1.dp)
                                 }
+
+
                             }
                         }
                     }
 
-                  
+
                 }
             }
 
