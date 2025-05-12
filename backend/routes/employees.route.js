@@ -17,7 +17,12 @@ import {
   singleAttendance,
   singleStatus,
   updateEmployee,
+  logout,
+  updateShift,
+  deleteShift,
+  changePassword
 } from "./routes.js";
+
 
 const router = express.Router();
 
@@ -26,6 +31,12 @@ router.post("/register", register); //works
 
 // Login
 router.post("/login", login); //works
+
+// Login
+router.post("/logout", logout); //works
+
+// Change password
+router.post("/changePassword/:id", changePassword); // works
 
 // Get all
 router.get("/employees", getAllEmployees); //works
@@ -54,6 +65,12 @@ router.get("/assignedShift/:id", getAssignedShift); //works
 //get all assigned shifts
 router.get("/assignedShift", getAllAssignedShifts); //works
 
+// update a shift by ID
+router.put("/shift/:id", updateShift); //works
+
+// delete a shift by ID
+router.delete("/shift/:id", deleteShift); //works
+
 //get all Employee with status
 router.get("/status", getAllEmployeesWithStatus); //works
 
@@ -65,4 +82,3 @@ router.get("/attendance", getAllEmployeesWithAttendance); //works
 router.get("/attendance/:id", singleAttendance); //works
 
 export default router;
-
