@@ -38,13 +38,6 @@ const employeeSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    shift: {
-      type: String,
-      enum: ["morning", "afternoon", "night", "null"],
-      default: "null",
-      required: true,
-      trim: true,
-    },
     status: {
       type: String,
       enum: ["active", "inactive", "on leave"],
@@ -53,24 +46,10 @@ const employeeSchema = new mongoose.Schema(
     isAdmin: {
       type: Boolean,
       default: false,
-    },
-    attendance: [
-      {
-        date: {
-          type: String,
-          required: true,
-        },
-        status: {
-          type: String,
-          enum: ["active", "on leave", "inactive"],
-          required: true,
-        },
-      },
-    ],
+    }
   },
   { timestamps: true }
 );
 
 const Employee = mongoose.model("Employee", employeeSchema);
 export default Employee;
-
