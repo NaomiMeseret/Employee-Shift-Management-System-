@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.naomi.shiftmaster.data.model.Attendance
 import com.naomi.shiftmaster.data.model.Employee
+import com.naomi.shiftmaster.data.model.ShiftWithEmployee
 import com.naomi.shiftmaster.data.repository.EmployeeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,60 +15,49 @@ class AdminAttendanceViewModel(
     private val repository: EmployeeRepository = EmployeeRepository()
 ) : ViewModel() {
 
-    data class AttendanceRecord(
-        val employee: Employee,
-        val shiftType: String,
-        val isPresent: Boolean
-    )
 
-    data class DailyAttendance(
-        val date: String,
-        val records: List<AttendanceRecord>
-    )
+    private val _attendances = MutableStateFlow<List<Attendance>>(emptyList())
+    val  attendances : StateFlow<List<Attendance>> = _attendances.asStateFlow()
 
-    private val _groupedAttendance = MutableStateFlow<List<DailyAttendance>>(emptyList())
-    val groupedAttendance: StateFlow<List<DailyAttendance>> = _groupedAttendance.asStateFlow()
+    private val _shiftWithEmployees = MutableStateFlow<List<ShiftWithEmployee>>(emptyList())
+    val shiftWithEmployees: StateFlow<List<ShiftWithEmployee>> = _shiftWithEmployees.asStateFlow()
+
 
     init {
-        fetchGroupedAttendance()
-    }
-
-    private fun fetchGroupedAttendance() {
         viewModelScope.launch {
-            val attendances = repository.getAllEmployeesWithAttendance()
-            println("\uD83D\uDCCB Attendances fetched: ${attendances.size}")
-            attendances.forEach { println("  ➤ $it") }
+            try {
+                val fetchedEmployees = repository.getAllEmployees()
+                val fetchedShifts = repository.getAllAssignedShifts()
 
-            val employees = repository.getAllEmployees()
-            println("\uD83D\uDC65 Employees fetched: ${employees.size}")
-            employees.forEach { println("  ➤ $it") }
+                println("No it is shift fetching ${fetchedShifts}")
+                val shiftList = mutableListOf<ShiftWithEmployee>()
 
-            val grouped = attendances.groupBy { it.date }.map { (date, dailyList) ->
-                println("\uD83D\uDCC6 Processing date: $date")
-                val records = dailyList.mapNotNull { att ->
-                    println("\uD83D\uDD0D Looking for employee with ID: ${att.employeeId}")
-                    val emp = employees.find { it.id.toString() == att.employeeId }
-                    println("   → Found: $emp")
-
-                    emp?.let {
-                        AttendanceRecord(
-                            employee = it,
-                            shiftType = att.status,
-                            isPresent = att.clockInTime.isNotBlank()
+                for (shift in fetchedShifts) {
+                    val employee = fetchedEmployees.find { it.id.toString() == shift.employeeId }
+                    println("why is shift id null ${shift.id}")
+                    if (employee != null) {
+                        shiftList.add(
+                            ShiftWithEmployee(
+                                id = shift.id,
+                                employee = employee,
+                                date = shift.date,
+                                shiftType = shift.shiftType,
+                                attendance= shift.attendance
+                            )
                         )
                     }
+                    println("added: ${shift}")
                 }
-                println("✅ Records for $date: ${records.size}")
-                DailyAttendance(date = date, records = records)
-            }.sortedByDescending { it.date }
+                _shiftWithEmployees.value = shiftList
 
-            println("\uD83D\uDCCA Grouped attendance ready: ${grouped.size} days")
-            _groupedAttendance.value = grouped
+            } catch (e: Exception) {
+                println("❌ Error fetching data: ${e.message}")
+            }
         }
     }
 
     fun downloadAttendanceData() {
-        println("Exporting attendance data: ${_groupedAttendance.value}")
+        println("Exporting attendance data: ${_shiftWithEmployees.value}")
     }
 
     fun signOut(onSignOut: () -> Unit) {
