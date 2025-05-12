@@ -39,7 +39,8 @@ fun MainScreen() {
             composable("Attendance") {
                 EmployeeAttendanceScreen(
 
-                    onNavItemClick = { route -> navController.navigate(route) }
+                    onNavItemClick = { route -> navController.navigate(route) },
+                    viewModel = employeeViewModel
                 )
             }
             composable("Team") {
