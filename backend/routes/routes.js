@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import Employee from "../modals/modal.employee.js";
+import Shift from "../modals/modal.shift.js";
 
 // Register
 async function register(req, res) {
@@ -28,7 +29,7 @@ async function register(req, res) {
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-
+    
     const employee = new Employee({
       name,
       email,
@@ -47,7 +48,43 @@ async function register(req, res) {
       .status(201)
       .json({ message: "User created successfully", employee: savedEmployee });
   } catch (error) {
+    console.log(error)
     return res.status(400).json({ message: "Error creating user", error });
+  }
+}
+
+async function changePassword(req, res) {
+  const { id } = req.params;
+  const { currentPassword, newPassword } = req.body;
+  
+
+  try {
+    // 1. Find the employee by ID
+    const employee = await Employee.findOne({ id });
+    if (!employee) {
+      console.log( "Employee not found")
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    // 2. Verify the current password
+    const isMatch = await bcrypt.compare(currentPassword, employee.password);
+    if (!isMatch) {
+      console.log("Incorrect current password")
+      return res.status(401).json({ message: "Incorrect current password" });
+    }
+
+    // 3. Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // 4. Update and save the new password
+    employee.password = hashedPassword;
+    await employee.save();
+
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error changing password", error });
   }
 }
 
@@ -65,9 +102,10 @@ async function login(req, res) {
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
+   
     return res.status(200).json({ message: "Login successful", employee });
   } catch (error) {
+    console.log(error)
     return res.status(500).json({ message: "Login error", error });
   }
 }
@@ -140,6 +178,7 @@ async function updateEmployee(req, res) {
 
     return res.status(200).json(employee);
   } catch (error) {
+    console.log(error)
     return res.status(500).json({ message: "Error updating employee", error });
   }
 }
@@ -151,10 +190,16 @@ async function deleteEmployee(req, res) {
 
   try {
     const employee = await Employee.findOneAndDelete({ id });
+
     if (!employee) {
       return res.status(404).json({ message: "Employee not found" });
     }
-    return res.status(200).json({ message: "Employee deleted successfully" });
+
+    // Delete all shifts for this employee
+    await Shift.deleteMany({ employeeId: Number(id) }); // Make sure types match
+    
+
+    return res.status(200).json({ message: "Employee and their shifts deleted successfully" });
   } catch (error) {
     return res.status(500).json({ message: "Error deleting employee", error });
   }
@@ -172,7 +217,6 @@ async function clockin(req, res) {
     if (!employee) {
       return res.status(404).json({ message: "Employee not found" });
     }
-
     const alreadyClockedIn = employee.attendance.find((a) => a.date === date);
     if (alreadyClockedIn) {
       return res.status(400).json({ message: "Already clocked in today" });
@@ -216,28 +260,34 @@ async function clockout(req, res) {
   }
 }
 
-//assign shifts
-
+// assign shift to employee
 async function assignShift(req, res) {
+  const { date, shiftType, shiftId } = req.body;
   const { id } = req.params;
-  const { shift } = req.body;
-  //expected values are "morning" | "afternoon" | "night" | null(delete) only. for shift
 
   try {
-    const employee = await Employee.findOneAndUpdate(
-      { id },
-      { shift },
-      { new: true }
-    );
-
-    if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
+    
+    console.log("here are the data sent", date, shiftType, shiftId)
+  
+    const existingId = await Employee.findOne({
+     shiftId 
+    });
+    if (existingId) {
+      return res.status(400).json({ message: "ID already in use" });
     }
+    const shift = new Shift({
+      id: shiftId,
+      employeeId: Number(id),
+      date,
+      shiftType
+    });
+    
 
-    return res
-      .status(200)
-      .json({ message: "Shift assigned successfully", employee });
+    const savedShift = await shift.save();
+    
+    return res.status(201).json({ message: "Shift assigned successfully", shift: savedShift });
   } catch (error) {
+    console.log(error)
     return res.status(500).json({ message: "Error assigning shift", error });
   }
 }
@@ -248,16 +298,15 @@ async function getAssignedShift(req, res) {
   const { id } = req.params;
 
   try {
-    const employee = await Employee.findOne({ id });
+    const shift = await Shift.find({ employeeId: id });
 
-    if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
+    if (!shift) {
+      return res.status(404).json({ message: "Shift not found for employee" });
     }
 
-    return res
-      .status(200)
-      .json({ name: employee.name, id: employee.id, shift: employee.shift });
+    return res.status(200).json({message:"Shift(s) found successfully", shifts: shift});
   } catch (error) {
+    console.log(error)
     return res.status(500).json({ message: "Error retrieving shift", error });
   }
 }
@@ -266,15 +315,64 @@ async function getAssignedShift(req, res) {
 
 async function getAllAssignedShifts(req, res) {
   try {
-    const employees = await Employee.find({}, "name id shift");
+    const shifts = await Shift.find();
 
-    if (!employees) {
-      return res.status(404).json({ message: "No employees found" });
+    if (!shifts.length) {
+      return res.status(404).json({ message: "No assigned shifts found" });
     }
 
-    return res.status(200).json(employees);
+    return res.status(200).json(shifts);
   } catch (error) {
+    console.log(error)
     return res.status(500).json({ message: "Error retrieving shifts", error });
+  }
+}
+
+// update shift by ID
+async function updateShift(req, res) {
+  const { id } = req.params;
+  const { date, shiftType } = req.body;
+  
+  try {
+    const updatedShift = await Shift.findOneAndUpdate(
+      { id },
+      { date, shiftType },
+      { new: true } // return updated doc
+    );
+    
+    if (!updatedShift) {
+      return res.status(404).json({ message: "Shift not found" });
+    }
+    console.log(updatedShift)
+   
+    return res.status(200).json({ message: "Shift updated", shift: {
+      id: updatedShift.id,
+      date: updatedShift.date,
+      shiftType: updatedShift.shiftType,
+      employeeId: updatedShift.employeeId
+    } });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: "Error updating shift", error });
+  }
+}
+
+// delete shift by ID
+async function deleteShift(req, res) {
+  const { id } = req.params;
+ console.log(id, typeof id )
+  try {
+    const deletedShift = await Shift.findOneAndDelete({id});
+
+    if (!deletedShift) {
+      console.log("issue")
+      return res.status(404).json({ message: "Shift not found" });
+    }
+
+    return res.status(200).json({ message: "Shift deleted successfully" });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: "Error deleting shift", error });
   }
 }
 
@@ -332,7 +430,6 @@ async function singleAttendance(req, res) {
       .json({ message: "Error retrieving employee", error });
   }
 }
-
 //get all employees with attendance
 
 async function getAllEmployeesWithAttendance(req, res) {
@@ -351,8 +448,16 @@ async function getAllEmployeesWithAttendance(req, res) {
   }
 }
 
+// logout user
+async function logout(req, res) {
+  // Since there's no token/session mechanism, we'll assume logout is client-handled
+  // This function is kept for API completeness
+  return res.status(200).json({ message: "Logout successful" });
+}
+
 export {
   register,
+  changePassword,
   login,
   getAllEmployees,
   getOneEmployee,
@@ -360,11 +465,14 @@ export {
   deleteEmployee,
   clockin,
   clockout,
-  assignShift,
+  assignShift, // ← Add this line
   getAssignedShift,
   getAllAssignedShifts,
+  updateShift,
+  deleteShift,
   getAllEmployeesWithStatus,
   getAllEmployeesWithAttendance,
   singleAttendance,
   singleStatus,
+  logout, // ← Add this
 };
