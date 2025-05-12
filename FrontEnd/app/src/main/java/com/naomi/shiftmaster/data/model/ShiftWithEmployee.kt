@@ -4,5 +4,6 @@ data class ShiftWithEmployee(
     val id: String,
     val employee: Employee,
     val date: String,
-    val shiftType: String // "Morning", "Evening", or "Night"
+    val shiftType: String, // "Morning", "Evening", or "Night"
+    val attendance: List<Attendance>? = listOf()
 )
