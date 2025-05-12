@@ -26,6 +26,15 @@ import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
 
+
+import androidx.compose.ui.platform.LocalContext
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import com.naomi.shiftmaster.data.model.Attendance
+import com.naomi.shiftmaster.viewmodel.EmployeeViewModel
+
+
 // Consistent header and footer height
 private val HEADER_HEIGHT    = 70.dp
 private val FOOTER_HEIGHT    = 70.dp
@@ -34,21 +43,44 @@ private val CONTENT_PADDING    = 16.dp
 private val HEADER_NAV_SPACING = 24.dp
 private val SECTION_SPACING    = 20.dp
 
-data class ActivityItem(val actionType: String, val date: String, val time: String)
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EmployeeAttendanceScreen(
-    onNavItemClick: (String) -> Unit
+    onNavItemClick: (String) -> Unit,
+    viewModel: EmployeeViewModel,
 ) {
-    val recentActivities = remember {
-        mutableStateListOf(
-            ActivityItem("Clock In",  "Today",     "08:00"),
-            ActivityItem("Clock Out", "Yesterday","16:00"),
-            ActivityItem("Clock Out", "Yesterday","18:00")
-        )
-    }
+
     val currentTime = remember { mutableStateOf("00:00:00") }
+    var hasClockedIn by remember { mutableStateOf(false) }
+    val shifts by viewModel.assignedShifts.collectAsState()
+    val employeeId by viewModel.currentEmployeeId.collectAsState()
+    var refreshTrigger by remember { mutableStateOf(0) }
+
+    LaunchedEffect(employeeId, refreshTrigger) {
+        employeeId?.let { id ->
+            viewModel.loadAssignedShifts(id)
+        }
+    }
+    var shiftId by remember { mutableStateOf("") }
+    var shiftType by remember { mutableStateOf("") }
+    var shiftDate by remember { mutableStateOf("") }
+
+
+    val recentActivities by remember(shifts) {
+        derivedStateOf {
+            shifts.flatMap { shift ->
+                shift.attendance?.map { att ->
+                    Attendance(att.date, att.actionType, att.status, att.time)
+                } ?: emptyList()
+            }
+        }
+    }
+
+    val shiftOptions = shifts.map { it.id }
+    val expanded = remember { mutableStateOf(false) }
+
 
     LaunchedEffect(Unit) {
         val fmt = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
@@ -131,16 +163,66 @@ fun EmployeeAttendanceScreen(
                         Spacer(Modifier.height(24.dp))
                         Text(currentTime.value, fontSize = 32.sp, fontWeight = FontWeight.Bold)
                         Text("Current Time", fontSize = 14.sp, color = Color.DarkGray)
+                        Box {
+                            OutlinedTextField(
+                                value = shiftId,
+
+                                onValueChange = {
+                                    shifts.map{
+                                        if (it.id == shiftId){
+                                            shiftType = it.shiftType
+                                            shiftDate = it.date
+                                        }
+                                    }
+                                },
+                                label = { Text("Shift Id You Are Attending") },
+                                modifier = Modifier.fillMaxWidth(),
+                                readOnly = true,
+                                trailingIcon = {
+                                    IconButton(onClick = { expanded.value = true }) {
+                                        Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
+                                    }
+                                }
+                            )
+                            DropdownMenu(
+                                expanded = expanded.value,
+                                onDismissRequest = { expanded.value = false }
+                            ) {
+                                shiftOptions.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option) },
+                                        onClick = {
+                                            shiftId = option
+                                            expanded.value = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+
                         Spacer(Modifier.height(24.dp))
                         Row(modifier = Modifier.fillMaxWidth()) {
                             Button(
                                 onClick = {
                                     val fmt = SimpleDateFormat("HH:mm", Locale.getDefault())
-                                    recentActivities.add(
-                                        0,
-                                        ActivityItem("Clock In", "Today", fmt.format(Date()))
+                                    viewModel.updateShift(
+                                        shiftId.toInt(),
+                                        shiftType,
+                                        shiftDate,
+                                        Attendance(
+                                            date = shiftDate,
+                                            actionType = "Clock In",
+                                            status = "active",
+                                            time = currentTime.value
+                                        )
                                     )
+                                    hasClockedIn = !hasClockedIn
+                                    // Refresh shifts so recentActivities updates
+                                    refreshTrigger++
+
                                 },
+                                enabled = !hasClockedIn,
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(48.dp)
@@ -153,11 +235,22 @@ fun EmployeeAttendanceScreen(
                             Button(
                                 onClick = {
                                     val fmt = SimpleDateFormat("HH:mm", Locale.getDefault())
-                                    recentActivities.add(
-                                        0,
-                                        ActivityItem("Clock Out", "Today", fmt.format(Date()))
+                                    viewModel.updateShift(
+                                        shiftId.toInt(),
+                                        shiftType,
+                                        shiftDate,
+                                        Attendance(
+                                            date = shiftDate,
+                                            actionType = "Clock Out",
+                                            status = "on leave",
+                                            time = currentTime.value
+                                        )
                                     )
+                                    hasClockedIn= !hasClockedIn
+                                    refreshTrigger++
+
                                 },
+                                enabled = hasClockedIn,
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(48.dp)
@@ -186,15 +279,16 @@ fun EmployeeAttendanceScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
+
                                 Text(activity.actionType, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                                Text(activity.date, fontSize = 14.sp, color = Color.Gray)
+                                Text(text= "Shift: ${shiftId}", fontSize = 14.sp, color = Color.Gray)
                             }
                             Surface(
                                 shape = RoundedCornerShape(16.dp),
                                 color = Color(0xFFD3D3D3)
                             ) {
                                 Text(
-                                    activity.time,
+                                    activity.time.substringBeforeLast(":"),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Medium,
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -259,5 +353,5 @@ private fun HeaderRow(modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 private fun EmployeeAttendancePreview() {
-    EmployeeAttendanceScreen(onNavItemClick = {})
+    EmployeeAttendanceScreen(onNavItemClick = {}, viewModel = EmployeeViewModel())
 }
