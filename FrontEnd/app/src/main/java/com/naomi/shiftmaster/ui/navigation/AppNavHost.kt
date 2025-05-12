@@ -65,7 +65,8 @@ fun AppNavHost(navController: NavHostController, startDestination: String = Scre
                         "team" -> navController.navigate(Screen.EmployeeTeam.route)
                         "profile" -> navController.navigate(Screen.EmployeeProfile.route)
                     }
-                }
+                },
+                viewModel = employeeViewModel
             )
         }
 
@@ -259,7 +260,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String = Scre
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true } // clears back stack
                     }
-                },
+                }
             )
         }
 
