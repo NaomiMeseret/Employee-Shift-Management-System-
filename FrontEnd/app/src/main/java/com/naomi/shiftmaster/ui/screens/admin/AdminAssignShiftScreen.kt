@@ -23,12 +23,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.BackHandler
 
-import com.naomi.shiftmaster.R
-import com.naomi.shiftmaster.ui.components.NavItem
+import androidx.compose.foundation.clickable
+
+
+import androidx.compose.runtime.*
+
 import com.naomi.shiftmaster.viewmodel.EmployeeViewModel
+
+import android.app.DatePickerDialog
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.DateRange
+
+import java.util.Calendar
+
+import com.naomi.shiftmaster.R
 
 // Consistent header and footer height
 private val HEADER_HEIGHT = 70.dp
@@ -62,12 +73,22 @@ fun AdminAssignShiftScreen(
     val id = remember { mutableStateOf("") }
     val employeeId = remember { mutableStateOf("") }
     val employeeRole = remember { mutableStateOf("") }
-    val shiftDate = remember { mutableStateOf("") }
-    val shiftTime = remember { mutableStateOf("") }
+
 
     // Error state
     val showError = remember { mutableStateOf(false) }
     val errorMessage = remember { mutableStateOf("") }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    var shiftType by remember { mutableStateOf("") }
+    var shiftDate by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    val showDatePicker = remember { mutableStateOf(false) }
+    val shiftOptions = listOf("Morning", "Afternoon", "Night")
+    val expanded = remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -261,43 +282,73 @@ fun AdminAssignShiftScreen(
                         )
                     )
 
-                    OutlinedTextField(
-                        value = shiftDate.value,
-                        onValueChange = { shiftDate.value = it },
-                        label = { Text("Shift date") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = FORM_SPACING),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            disabledTextColor = Color.Gray,
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = Color.Black,
-                            unfocusedBorderColor = Color.LightGray
-                        )
-                    )
+                    val context = LocalContext.current
+                    val calendar = Calendar.getInstance()
 
-                    OutlinedTextField(
-                        value = shiftTime.value,
-                        onValueChange = { shiftTime.value = it },
-                        label = { Text("Shift time") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = FORM_SPACING),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.Black,
-                            unfocusedTextColor = Color.Black,
-                            disabledTextColor = Color.Gray,
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = Color.Black,
-                            unfocusedBorderColor = Color.LightGray
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = shiftDate,
+                            onValueChange = {},
+                            label = { Text("Shift Date") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showDatePicker.value = true },
+                            readOnly = true,
+                            trailingIcon = {
+                                IconButton(onClick = { showDatePicker.value = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.DateRange,
+                                        contentDescription = "Pick Date"
+                                    )
+                                }
+                            }
                         )
-                    )
+                    }
+                    if (showDatePicker.value) {
+                        val calendar = Calendar.getInstance()
+                        DatePickerDialog(
+                            context,
+                            { _, year, month, dayOfMonth ->
+                                shiftDate = "$year-${month + 1}-${dayOfMonth}"
+                                showDatePicker.value = false
+                            },
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH)
+                        ).show()
+                    }
+
+
+
+                    Box {
+                        OutlinedTextField(
+                            value = shiftType,
+                            onValueChange = {},
+                            label = { Text("Shift Type") },
+                            modifier = Modifier.fillMaxWidth(),
+                            readOnly = true,
+                            trailingIcon = {
+                                IconButton(onClick = { expanded.value = true }) {
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = expanded.value,
+                            onDismissRequest = { expanded.value = false }
+                        ) {
+                            shiftOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        shiftType = option
+                                        expanded.value = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     // Add some space before the button
                     Spacer(modifier = Modifier.height(32.dp))
@@ -317,7 +368,7 @@ fun AdminAssignShiftScreen(
                         // Validate form fields
                         if (id.value.isBlank() || id.value.isBlank() ||
                             employeeId.value.isBlank() || employeeRole.value.isBlank() ||
-                            shiftDate.value.isBlank() || shiftTime.value.isBlank()) {
+                            shiftDate.isBlank() || shiftType.isBlank()) {
 
                             // Show error message
                             errorMessage.value = "All fields are required"
@@ -332,13 +383,8 @@ fun AdminAssignShiftScreen(
                             val success = viewModel.assignShift(
                                 shiftId = id.value,
                                 employeeId = employeeId.value.toString().toInt(),
-                                date = shiftDate.value,
-                                shiftType = when (shiftTime.value.lowercase()) {
-                                    "morning" -> "morning"
-                                    "afternoon" -> "afternoon"
-                                    "night" -> "night"
-                                    else -> "morning"
-                                }
+                                date = shiftDate,
+                                shiftType = shiftType.lowercase()
                             )
 
                             if (true) {
