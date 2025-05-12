@@ -68,7 +68,6 @@ fun AdminEditShiftScreen(
         profilePicture = "",
         status = "active",
         isAdmin = false,
-        attendance = emptyList()
     )
 
 
@@ -254,38 +253,38 @@ fun AdminEditShiftScreen(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
-                  Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = shiftDate,
-                        onValueChange = {},
-                        label = { Text("Shift Date") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showDatePicker.value = true },
-                        readOnly = true,
-                        trailingIcon = {
-                            IconButton(onClick = { showDatePicker.value = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.DateRange,
-                                    contentDescription = "Pick Date"
-                                )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = shiftDate,
+                            onValueChange = {},
+                            label = { Text("Shift Date") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showDatePicker.value = true },
+                            readOnly = true,
+                            trailingIcon = {
+                                IconButton(onClick = { showDatePicker.value = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.DateRange,
+                                        contentDescription = "Pick Date"
+                                    )
+                                }
                             }
-                        }
-                    )
-                }
-                if (showDatePicker.value) {
-                    val calendar = Calendar.getInstance()
-                    DatePickerDialog(
-                        context,
-                        { _, year, month, dayOfMonth ->
-                            shiftDate = "$year-${month + 1}-${dayOfMonth}"
-                            showDatePicker.value = false
-                        },
-                        calendar.get(Calendar.YEAR),
-                        calendar.get(Calendar.MONTH),
-                        calendar.get(Calendar.DAY_OF_MONTH)
-                    ).show()
-                }
+                        )
+                    }
+                    if (showDatePicker.value) {
+                        val calendar = Calendar.getInstance()
+                        DatePickerDialog(
+                            context,
+                            { _, year, month, dayOfMonth ->
+                                shiftDate = "$year-${month + 1}-${dayOfMonth}"
+                                showDatePicker.value = false
+                            },
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH)
+                        ).show()
+                    }
 
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -298,7 +297,7 @@ fun AdminEditShiftScreen(
 
                             coroutineScope.launch {
 
-                                        snackbarHostState.showSnackbar("Shift Edited")
+                                snackbarHostState.showSnackbar("Shift Edited")
 
 
 
@@ -324,4 +323,3 @@ fun AdminEditShiftScreennPreview() {
     val navController = rememberNavController()
     AdminEditShiftScreen(employeeId = "-1", shiftId = "-1", viewModel = EmployeeViewModel())
 }
-
